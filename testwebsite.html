@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OATHFALL - Rift of the Dead</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        /* ============ PRELOADER ============ */
+        .preloader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 1s ease, visibility 1s ease;
+        }
+        .preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .preloader-text {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 2rem;
+            color: #ff4400;
+            animation: prePulse 1.5s infinite;
+        }
+        .preloader-bar {
+            width: 200px; height: 3px;
+            background: #1a1a1a;
+            margin-top: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .preloader-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4400, #ff6600, #ff4400);
+            animation: preFill 2s ease-in-out forwards;
+            border-radius: 3px;
+        }
+        @keyframes preFill { 0%{width:0} 100%{width:100%} }
+        @keyframes prePulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+        /* ============ PARTICLES ============ */
+        .particles-container {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(255,68,0,0.8), transparent);
+            border-radius: 50%;
+            animation: floatP linear infinite;
+        }
+        @keyframes floatP {
+            0%{transform:translateY(100vh) rotate(0);opacity:0}
+            10%{opacity:1} 90%{opacity:1}
+            100%{transform:translateY(-10vh) rotate(720deg);opacity:0}
+        }
+
+        /* ============ FOG ============ */
+        .fog-container {
+            position: fixed; top:0; left:0;
+            width:100%; height:100%;
+            z-index:1; pointer-events:none; overflow:hidden;
+        }
+        .fog {
+            position:absolute; width:200%; height:100%;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 800 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E");
+            opacity:0.08;
+        }
+        .fog-1{animation:fogM1 30s linear infinite}
+        .fog-2{animation:fogM2 25s linear infinite;opacity:.05}
+        @keyframes fogM1{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+        @keyframes fogM2{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+
+        /* ============ NAVBAR ============ */
+        .navbar {
+            position: fixed; top:0; left:0; width:100%;
+            z-index: 1000;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            transition: all 0.5s ease;
+        }
+        .navbar.scrolled {
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+            padding: 15px 50px;
+            border-bottom: 1px solid rgba(255,68,0,0.2);
+        }
+        .nav-logo {
+            font-family:'Cinzel Decorative',serif;
+            font-size:1.5rem; color:#ff4400;
+            text-decoration:none; letter-spacing:3px;
+            position:relative;
+        }
+        .nav-logo::after {
+            content:''; position:absolute; bottom:-5px; left:0;
+            width:100%; height:2px;
+            background:linear-gradient(90deg,transparent,#ff4400,transparent);
+            animation:logoPulse 3s infinite;
+        }
+        @keyframes logoPulse{0%,100%{opacity:.3}50%{opacity:1}}
+        .nav-links {
+            display:flex; gap:40px; list-style:none;
+        }
+        .nav-links a {
+            color:#888; text-decoration:none;
+            font-family:'Rajdhani',sans-serif;
+            font-size:.9rem; font-weight:600;
+            letter-spacing:3px; text-transform:uppercase;
+            transition:all .3s ease; position:relative;
+        }
+        .nav-links a:hover{color:#ff4400}
+        .nav-links a::after {
+            content:''; position:absolute;
+            bottom:-8px; left:50%; transform:translateX(-50%);
+            width:0; height:2px; background:#ff4400;
+            transition:width .3s ease;
+        }
+        .nav-links a:hover::after{width:100%}
+        .hamburger {
+            display:none; flex-direction:column;
+            cursor:pointer; gap:6px; z-index:1001;
+        }
+        .hamburger span {
+            width:30px; height:2px; background:#ff4400;
+            transition:all .3s ease;
+        }
+
+        /* ============ HERO ============ */
+        .hero {
+            position:relative; width:100%; height:100vh;
+            display:flex; align-items:center; justify-content:center;
+            flex-direction:column; z-index:2; overflow:hidden;
+        }
+        .hero-bg {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            background:
+                radial-gradient(ellipse at 20% 80%, rgba(139,0,0,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255,68,0,0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(20,0,0,1) 0%, #000 100%);
+            animation: bgPulse 8s ease-in-out infinite alternate;
+        }
+        @keyframes bgPulse {
+            0%{filter:brightness(1)}
+            100%{filter:brightness(1.15)}
+        }
+        .vignette {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+            z-index:1;
+        }
+        .grid-bg {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            background-image:
+                linear-gradient(rgba(255,68,0,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,68,0,0.03) 1px, transparent 1px);
+            background-size:50px 50px;
+        }
+        .lightning {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            pointer-events:none; z-index:5; opacity:0;
+            background:radial-gradient(ellipse at 50% 40%, rgba(255,68,0,0.1) 0%, transparent 70%);
+            animation:lightning 8s infinite;
+        }
+        @keyframes lightning {
+            0%,95%,100%{opacity:0}
+            96%{opacity:1}97%{opacity:0}98%{opacity:.8}99%{opacity:0}
+        }
+
+        /* Rune circles */
+        .rune-circle {
+            position:absolute;
+            border:1px solid rgba(255,68,0,0.08);
+            border-radius:50%;
+            animation:runeR 20s linear infinite;
+            pointer-events:none;
+        }
+        .rune-circle-1{width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%)}
+        .rune-circle-2{width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);animation-direction:reverse;animation-duration:30s;border-style:dashed}
+        .rune-circle-3{width:700px;height:700px;top:50%;left:50%;transform:translate(-50%,-50%);animation-duration:25s;border-style:dotted}
+        @keyframes runeR{0%{transform:translate(-50%,-50%) rotate(0)}100%{transform:translate(-50%,-50%) rotate(360deg)}}
+
+        /* ============ DRAGON IMAGES ============ */
+        .dragon-wrapper {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 6;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .dragon-img {
+            position: absolute;
+            top: 50%;
+            height: 80%;
+            max-height: 600px;
+            opacity: 0;
+            transition: all 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+            filter: brightness(0) invert(1);
+            mix-blend-mode: screen;
+        }
+
+        /* Dragon left */
+        .dragon-left-img {
+            left: -30%;
+            transform: translateY(-50%) scaleX(1);
+        }
+
+        /* Dragon right */
+        .dragon-right-img {
+            right: -30%;
+            transform: translateY(-50%) scaleX(-1);
+        }
+
+        /* Active dragons on hover */
+        .title-hover-zone:hover ~ .dragon-wrapper .dragon-left-img,
+        .title-hover-zone.touched ~ .dragon-wrapper .dragon-left-img {
+            left: -5%;
+            opacity: 0.15;
+            filter: brightness(0.4) sepia(1) saturate(5) hue-rotate(-10deg) drop-shadow(0 0 40px rgba(255,68,0,0.6));
+            mix-blend-mode: screen;
+        }
+
+        .title-hover-zone:hover ~ .dragon-wrapper .dragon-right-img,
+        .title-hover-zone.touched ~ .dragon-wrapper .dragon-right-img {
+            right: -5%;
+            opacity: 0.15;
+            filter: brightness(0.4) sepia(1) saturate(5) hue-rotate(-10deg) drop-shadow(0 0 40px rgba(255,68,0,0.6));
+            mix-blend-mode: screen;
+        }
+
+        .dragon-left-img {
+            animation: dragonBreathL 6s ease-in-out infinite;
+        }
+        .dragon-right-img {
+            animation: dragonBreathR 6s ease-in-out infinite;
+            animation-delay: 0.5s;
+        }
+        @keyframes dragonBreathL {
+            0%,100%{transform:translateY(-50%) scaleX(1) translateX(0)}
+            50%{transform:translateY(-52%) scaleX(1) translateX(10px)}
+        }
+        @keyframes dragonBreathR {
+            0%,100%{transform:translateY(-50%) scaleX(-1) translateX(0)}
+            50%{transform:translateY(-48%) scaleX(-1) translateX(10px)}
+        }
+
+        /* Dragon fire glow effect behind title on hover */
+        .dragon-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px; height: 400px;
+            background: radial-gradient(ellipse, rgba(255,68,0,0.15) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 1s ease;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .title-hover-zone:hover ~ .dragon-glow,
+        .title-hover-zone.touched ~ .dragon-glow {
+            opacity: 1;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}
+            50%{transform:translate(-50%,-50%) scale(1.1);opacity:0.7}
+        }
+
+        /* ============ TITLE CONTAINER ============ */
+        .title-hover-zone {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            cursor: pointer;
+            padding: 40px;
+        }
+
+        .skull-deco {
+            font-size:1.5rem; opacity:.3;
+            animation:skullP 4s ease-in-out infinite;
+        }
+        @keyframes skullP{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:.5;transform:scale(1.1)}}
+
+        .title-deco {
+            display:flex; align-items:center;
+            justify-content:center; gap:20px; margin:15px 0;
+        }
+        .deco-line {
+            width:100px; height:1px;
+            background:linear-gradient(90deg,transparent,#ff4400,transparent);
+            animation:decoExp 3s ease-in-out infinite alternate;
+        }
+        @keyframes decoExp{0%{width:80px;opacity:.5}100%{width:150px;opacity:1}}
+        .deco-diamond {
+            width:10px; height:10px; background:#ff4400;
+            transform:rotate(45deg);
+            animation:diamP 2s ease-in-out infinite;
+        }
+        @keyframes diamP{0%,100%{transform:rotate(45deg) scale(1);opacity:.5}50%{transform:rotate(45deg) scale(1.3);opacity:1}}
+
+        /* Main title */
+        .main-title {
+            font-family:'Cinzel Decorative',serif;
+            font-size:clamp(4rem,12vw,10rem);
+            font-weight:900;
+            letter-spacing:15px;
+            line-height:1;
+            position:relative;
+            display:inline-block;
+            color:transparent;
+            background:linear-gradient(180deg, #fff 0%, #ff8855 30%, #ff4400 60%, #cc2200 100%);
+            -webkit-background-clip:text;
+            background-clip:text;
+            filter:drop-shadow(0 0 30px rgba(255,68,0,0.5));
+            animation:titleFloat 6s ease-in-out infinite;
+            transition:all .5s ease;
+        }
+        .main-title:hover {
+            letter-spacing:25px;
+            filter:drop-shadow(0 0 60px rgba(255,68,0,0.8)) drop-shadow(0 0 120px rgba(255,68,0,0.4));
+        }
+        @keyframes titleFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+        .ember-text::after {
+            content:''; position:absolute;
+            bottom:-5px; left:0; width:100%; height:20px;
+            background:linear-gradient(180deg, rgba(255,68,0,0.3), transparent);
+            filter:blur(10px);
+            animation:emberG 3s ease-in-out infinite alternate;
+        }
+        @keyframes emberG{0%{opacity:.3}100%{opacity:.8}}
+
+        .blood-drip {
+            position:absolute; bottom:-20px;
+            width:3px; height:0;
+            background:linear-gradient(180deg,#ff4400,#8b0000);
+            border-radius:0 0 3px 3px;
+            animation:drip 4s ease-in-out infinite;
+        }
+        @keyframes drip{0%,100%{height:0;opacity:0}50%{height:30px;opacity:.5}}
+
+        .subtitle {
+            font-family:'Cinzel',serif;
+            font-size:clamp(1.2rem,3.5vw,2.5rem);
+            letter-spacing:12px;
+            color:#888;
+            margin-top:10px;
+            text-transform:uppercase;
+            animation:subGlow 4s ease-in-out infinite alternate;
+        }
+        @keyframes subGlow{0%{color:#666;text-shadow:none}100%{color:#aaa;text-shadow:0 0 20px rgba(255,68,0,0.3)}}
+
+        .coming-soon {
+            font-family:'Rajdhani',sans-serif;
+            font-size:clamp(.9rem,2vw,1.3rem);
+            letter-spacing:8px;
+            text-transform:uppercase;
+            margin-top:40px;
+            color:#ff4400;
+            position:relative; overflow:hidden;
+            padding:15px 50px;
+            border:1px solid rgba(255,68,0,0.3);
+            background:rgba(255,68,0,0.05);
+            display:inline-block;
+        }
+        .coming-soon::before {
+            content:''; position:absolute;
+            top:0; left:-100%; width:100%; height:100%;
+            background:linear-gradient(90deg,transparent,rgba(255,68,0,0.1),transparent);
+            animation:csSweep 3s linear infinite;
+        }
+        @keyframes csSweep{0%{left:-100%}100%{left:100%}}
+
+        .ue5-badge {
+            margin-top:30px;
+            display:flex; align-items:center; gap:12px;
+            font-family:'Rajdhani',sans-serif;
+            font-size:.85rem; color:#555;
+            letter-spacing:4px; text-transform:uppercase;
+            justify-content:center;
+        }
+        .ue-icon {
+            width:35px; height:35px;
+            border:1px solid #333;
+            border-radius:5px;
+            display:flex; align-items:center; justify-content:center;
+            font-weight:900; font-size:.7rem;
+            color:#ff4400;
+            background:rgba(255,68,0,0.05);
+        }
+
+        .audio-bars {
+            display:flex; gap:3px; align-items:flex-end;
+            height:30px; margin-top:30px; justify-content:center;
+        }
+        .audio-bar {
+            width:3px;
+            background:rgba(255,68,0,0.3);
+            animation:audioB 1s ease-in-out infinite;
+        }
+        @keyframes audioB{0%,100%{height:5px}50%{height:25px}}
+
+        /* Fire particles */
+        .fire-particles {
+            position:absolute; top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            width:120%; height:200%;
+            pointer-events:none;
+            opacity:0; transition:opacity .5s;
+        }
+        .title-hover-zone:hover .fire-particles { opacity:1; }
+        .fire-particle {
+            position:absolute;
+            width:4px; height:4px;
+            background:#ff4400;
+            border-radius:50%;
+            animation:fireF 2s ease-in-out infinite;
+        }
+        @keyframes fireF{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-100px) scale(0);opacity:0}}
+
+        .smoke {
+            position:absolute; bottom:0; left:0;
+            width:100%; height:200px;
+            background:linear-gradient(180deg,transparent,rgba(0,0,0,0.8));
+            z-index:3;
+        }
+
+        .scroll-indicator {
+            position:absolute; bottom:40px; left:50%;
+            transform:translateX(-50%); z-index:10;
+            display:flex; flex-direction:column;
+            align-items:center; gap:10px;
+            animation:scrollB 2s ease-in-out infinite;
+        }
+        .scroll-indicator span {
+            font-family:'Rajdhani',sans-serif;
+            font-size:.7rem; letter-spacing:4px;
+            color:#444; text-transform:uppercase;
+        }
+        .scroll-line {
+            width:1px; height:40px;
+            background:linear-gradient(180deg,#ff4400,transparent);
+            animation:scrollL 2s ease-in-out infinite;
+        }
+        @keyframes scrollB{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(10px)}}
+        @keyframes scrollL{0%{opacity:0;height:0}50%{opacity:1;height:40px}100%{opacity:0;height:40px}}
+
+        /* ============ SECTIONS ============ */
+        .section { position:relative; z-index:2; padding:120px 50px; }
+
+        .about-section {
+            background:linear-gradient(180deg,#000 0%,#0a0000 50%,#000 100%);
+            text-align:center;
+        }
+        .section-header { margin-bottom:60px; }
+        .section-tag {
+            font-family:'Rajdhani',sans-serif;
+            font-size:.8rem; letter-spacing:6px;
+            color:#ff4400; text-transform:uppercase;
+            margin-bottom:15px;
+        }
+        .section-title {
+            font-family:'Cinzel',serif;
+            font-size:clamp(2rem,5vw,3.5rem);
+            color:#fff; letter-spacing:5px;
+        }
+        .section-line {
+            width:60px; height:2px; background:#ff4400;
+            margin:20px auto;
+        }
+        .about-text {
+            max-width:800px; margin:0 auto;
+            font-size:1.1rem; line-height:2;
+            color:#777; letter-spacing:1px;
+        }
+
+        .features-section { background:#000; }
+        .features-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:30px; max-width:1200px; margin:0 auto;
+        }
+        .feature-card {
+            background:linear-gradient(135deg,rgba(255,68,0,0.03) 0%,rgba(0,0,0,0.5) 100%);
+            border:1px solid rgba(255,68,0,0.1);
+            padding:50px 40px;
+            position:relative; overflow:hidden;
+            transition:all .5s ease; cursor:pointer;
+        }
+        .feature-card:hover {
+            border-color:rgba(255,68,0,0.5);
+            transform:translateY(-10px);
+            box-shadow:0 20px 60px rgba(255,68,0,0.1);
+        }
+        .feature-card::before {
+            content:''; position:absolute;
+            top:0; left:0; width:100%; height:3px;
+            background:linear-gradient(90deg,transparent,#ff4400,transparent);
+            opacity:0; transition:opacity .5s;
+        }
+        .feature-card:hover::before { opacity:1; }
+        .feature-icon { font-size:2.5rem; margin-bottom:25px; display:block; }
+        .feature-card h3 {
+            font-family:'Cinzel',serif;
+            font-size:1.3rem; letter-spacing:3px;
+            margin-bottom:15px; color:#fff;
+        }
+        .feature-card p { color:#555; line-height:1.8; font-size:.95rem; }
+
+        .gallery-section {
+            background:linear-gradient(180deg,#000 0%,#050000 50%,#000 100%);
+            padding:120px 50px; text-align:center;
+        }
+        .gallery-grid {
+            display:grid;
+            grid-template-columns:repeat(3,1fr);
+            gap:15px; max-width:1200px; margin:0 auto;
+        }
+        .gallery-item {
+            aspect-ratio:16/9;
+            background:linear-gradient(135deg,#111 0%,#0a0000 50%,#111 100%);
+            border:1px solid rgba(255,68,0,0.1);
+            position:relative; overflow:hidden;
+            cursor:pointer; transition:all .5s ease;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .gallery-item:hover {
+            border-color:rgba(255,68,0,0.5);
+            transform:scale(1.03); z-index:5;
+        }
+        .gallery-item .placeholder-text {
+            font-family:'Rajdhani',sans-serif;
+            font-size:.8rem; letter-spacing:4px;
+            color:#333; text-transform:uppercase;
+        }
+        .gallery-item:nth-child(1) { grid-column:span 2; }
+
+        .newsletter-section {
+            background:#000; text-align:center; padding:120px 50px;
+        }
+        .newsletter-form {
+            max-width:500px; margin:40px auto 0;
+            display:flex; gap:0;
+        }
+        .newsletter-form input {
+            flex:1; padding:18px 25px;
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,68,0,0.2);
+            border-right:none; color:#fff;
+            font-family:'Rajdhani',sans-serif;
+            font-size:1rem; letter-spacing:2px;
+            outline:none; transition:all .3s;
+        }
+        .newsletter-form input:focus {
+            border-color:#ff4400;
+            background:rgba(255,68,0,0.05);
+        }
+        .newsletter-form input::placeholder {
+            color:#333; letter-spacing:3px;
+            text-transform:uppercase; font-size:.8rem;
+        }
+        .newsletter-form button {
+            padding:18px 35px; background:#ff4400;
+            border:1px solid #ff4400; color:#000;
+            font-family:'Rajdhani',sans-serif;
+            font-weight:700; font-size:.9rem;
+            letter-spacing:3px; text-transform:uppercase;
+            cursor:pointer; transition:all .3s;
+        }
+        .newsletter-form button:hover {
+            background:#ff6600;
+            box-shadow:0 0 30px rgba(255,68,0,0.5);
+        }
+
+        /* ============ FOOTER ============ */
+        .footer {
+            position:relative; z-index:100;
+            background:linear-gradient(180deg,#000 0%,#050000 100%);
+            border-top:1px solid rgba(255,68,0,0.1);
+            padding:60px 50px 30px;
+        }
+        .footer-content {
+            max-width:1200px; margin:0 auto;
+            display:flex; flex-direction:column;
+            align-items:center; gap:40px;
+        }
+        .footer-logo {
+            font-family:'Cinzel Decorative',serif;
+            font-size:1.8rem; color:#ff4400;
+            letter-spacing:8px;
+        }
+        .footer-tagline {
+            font-family:'Rajdhani',sans-serif;
+            font-size:.8rem; letter-spacing:5px;
+            color:#333; text-transform:uppercase;
+            margin-top:5px;
+        }
+        .social-label {
+            font-family:'Rajdhani',sans-serif;
+            font-size:.65rem; letter-spacing:3px;
+            color:#333; text-transform:uppercase;
+            margin-bottom:15px; text-align:center;
+        }
+        .social-links {
+            display:flex; gap:25px; align-items:center;
+        }
+        .social-link {
+            width:55px; height:55px;
+            display:flex; align-items:center; justify-content:center;
+            border:1px solid rgba(255,68,0,0.15);
+            background:rgba(255,68,0,0.02);
+            color:#666; font-size:1.2rem;
+            text-decoration:none;
+            transition:all .4s ease;
+            position:relative; overflow:hidden;
+        }
+        .social-link::before {
+            content:''; position:absolute;
+            bottom:0; left:0; width:100%; height:0%;
+            background:linear-gradient(180deg,transparent,rgba(255,68,0,0.2));
+            transition:height .4s ease;
+        }
+        .social-link:hover::before { height:100%; }
+        .social-link:hover {
+            color:#ff4400;
+            border-color:#ff4400;
+            transform:translateY(-5px);
+            box-shadow:0 10px 30px rgba(255,68,0,0.2);
+        }
+        .social-link i { position:relative; z-index:2; }
+        .social-link.twitter:hover{color:#fff;border-color:#1DA1F2;box-shadow:0 10px 30px rgba(29,161,242,0.2)}
+        .social-link.twitter:hover::before{background:linear-gradient(180deg,transparent,rgba(29,161,242,0.2))}
+        .social-link.youtube:hover{color:#fff;border-color:#FF0000;box-shadow:0 10px 30px rgba(255,0,0,0.2)}
+        .social-link.youtube:hover::before{background:linear-gradient(180deg,transparent,rgba(255,0,0,0.2))}
+        .social-link.tiktok:hover{color:#fff;border-color:#00f2ea;box-shadow:0 10px 30px rgba(0,242,234,0.2)}
+        .social-link.tiktok:hover::before{background:linear-gradient(180deg,transparent,rgba(0,242,234,0.2))}
+        .social-link.facebook:hover{color:#fff;border-color:#4267B2;box-shadow:0 10px 30px rgba(66,103,178,0.2)}
+        .social-link.facebook:hover::before{background:linear-gradient(180deg,transparent,rgba(66,103,178,0.2))}
+
+        .footer-bottom {
+            display:flex; justify-content:space-between;
+            align-items:center; width:100%; max-width:1200px;
+            padding-top:30px;
+            border-top:1px solid rgba(255,68,0,0.05);
+        }
+        .footer-bottom p {
+            font-size:.75rem; color:#333; letter-spacing:2px;
+        }
+        .footer-links { display:flex; gap:30px; }
+        .footer-links a {
+            font-size:.75rem; color:#333;
+            text-decoration:none; letter-spacing:2px;
+            transition:color .3s;
+        }
+        .footer-links a:hover { color:#ff4400; }
+
+        /* ============ CURSOR TRAIL ============ */
+        .cursor-trail {
+            position:fixed; width:8px; height:8px;
+            background:radial-gradient(circle,#ff4400,transparent);
+            border-radius:50%; pointer-events:none;
+            z-index:10000; transition:opacity .5s;
+        }
+
+        /* ============ SCROLL REVEAL ============ */
+        .reveal {
+            opacity:0; transform:translateY(50px);
+            transition:all 1s ease;
+        }
+        .reveal.active { opacity:1; transform:translateY(0); }
+
+        /* ============ RESPONSIVE ============ */
+        @media(max-width:768px){
+            .navbar{padding:15px 25px}
+            .nav-links{
+                display:none; position:fixed;
+                top:0; left:0; width:100%; height:100vh;
+                background:rgba(0,0,0,0.98);
+                flex-direction:column; align-items:center;
+                justify-content:center; gap:30px;
+            }
+            .nav-links.active{display:flex}
+            .hamburger{display:flex}
+            .main-title{letter-spacing:8px}
+            .section{padding:80px 25px}
+            .gallery-grid{grid-template-columns:1fr}
+            .gallery-item:nth-child(1){grid-column:span 1}
+            .features-grid{grid-template-columns:1fr}
+            .footer{padding:40px 25px 20px}
+            .footer-bottom{flex-direction:column;gap:15px;text-align:center}
+            .newsletter-form{flex-direction:column}
+            .newsletter-form input{border-right:1px solid rgba(255,68,0,0.2)}
+            .social-links{gap:15px}
+            .social-link{width:48px;height:48px}
+            .rune-circle-1{width:300px;height:300px}
+            .rune-circle-2{width:380px;height:380px}
+            .rune-circle-3{width:450px;height:450px}
+            .dragon-img{max-height:350px}
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-text">OATHFALL</div>
+        <div class="preloader-bar"><div class="preloader-fill"></div></div>
+    </div>
+
+    <!-- Particles -->
+    <div class="particles-container" id="particles"></div>
+
+    <!-- Fog -->
+    <div class="fog-container">
+        <div class="fog fog-1"></div>
+        <div class="fog fog-2"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <a href="#" class="nav-logo">OATHFALL</a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#newsletter">Newsletter</a></li>
+        </ul>
+        <div class="hamburger" id="hamburger">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero" id="home">
+        <div class="hero-bg"></div>
+        <div class="grid-bg"></div>
+        <div class="vignette"></div>
+        <div class="lightning"></div>
+
+        <div class="rune-circle rune-circle-1"></div>
+        <div class="rune-circle rune-circle-2"></div>
+        <div class="rune-circle rune-circle-3"></div>
+
+        <!-- TITLE (hover zone) -->
+        <div class="title-hover-zone" id="titleZone">
+            <div class="fire-particles" id="fireParticles"></div>
+            <div class="skull-deco">☠</div>
+            <div class="title-deco">
+                <div class="deco-line"></div>
+                <div class="deco-diamond"></div>
+                <div class="deco-line"></div>
+            </div>
+            <h1 class="main-title ember-text" id="mainTitle">
+                OATHFALL
+                <div class="blood-drip" style="left:20%"></div>
+                <div class="blood-drip" style="left:55%;animation-delay:1s"></div>
+                <div class="blood-drip" style="left:80%;animation-delay:2s"></div>
+            </h1>
+            <div class="title-deco">
+                <div class="deco-line"></div>
+                <div class="deco-diamond"></div>
+                <div class="deco-line"></div>
+            </div>
+            <h2 class="subtitle">Rift of the Dead</h2>
+            <div class="coming-soon">⚔ Coming Soon ⚔</div>
+            <div class="ue5-badge">
+                <div class="ue-icon">UE5</div>
+                <span>Powered by Unreal Engine 5</span>
+            </div>
+            <div class="audio-bars">
+                <div class="audio-bar" style="animation-delay:0s"></div>
+                <div class="audio-bar" style="animation-delay:.1s"></div>
+                <div class="audio-bar" style="animation-delay:.2s"></div>
+                <div class="audio-bar" style="animation-delay:.3s"></div>
+                <div class="audio-bar" style="animation-delay:.4s"></div>
+                <div class="audio-bar" style="animation-delay:.5s"></div>
+                <div class="audio-bar" style="animation-delay:.6s"></div>
+                <div class="audio-bar" style="animation-delay:.7s"></div>
+                <div class="audio-bar" style="animation-delay:.8s"></div>
+                <div class="audio-bar" style="animation-delay:.9s"></div>
+                <div class="audio-bar" style="animation-delay:1s"></div>
+                <div class="audio-bar" style="animation-delay:1.1s"></div>
+            </div>
+        </div>
+
+        <!-- DRAGON IMAGES - real dragon silhouettes using inline SVG -->
+        <div class="dragon-wrapper">
+
+            <!-- LEFT DRAGON - detailed western dragon silhouette -->
+            <svg class="dragon-img dragon-left-img" viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="dg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ff6600" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="#8b0000" stop-opacity="0.8"/>
+                    </linearGradient>
+                    <filter id="dglow1">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Main Wing (large, bat-like) -->
+                <path d="M400,300 L250,80 L230,180 L150,50 L160,170 L80,30 L110,160 L30,60 L80,180 
+                         L20,150 L70,220 L40,210 L100,280 L200,260 L300,300 Z" 
+                      fill="url(#dg1)" opacity="0.9" filter="url(#dglow1)">
+                    <animateTransform attributeName="transform" type="rotate" 
+                        values="0 400 300;-3 400 300;0 400 300;3 400 300;0 400 300" dur="4s" repeatCount="indefinite"/>
+                </path>
+
+                <!-- Wing membrane lines -->
+                <line x1="400" y1="300" x2="250" y2="80" stroke="#ff4400" stroke-width="2" opacity="0.4"/>
+                <line x1="400" y1="300" x2="150" y2="50" stroke="#ff4400" stroke-width="2" opacity="0.3"/>
+                <line x1="400" y1="300" x2="80" y2="30" stroke="#ff4400" stroke-width="2" opacity="0.3"/>
+                <line x1="400" y1="300" x2="30" y2="60" stroke="#ff4400" stroke-width="2" opacity="0.2"/>
+
+                <!-- Body -->
+                <ellipse cx="440" cy="400" rx="80" ry="120" fill="url(#dg1)" opacity="0.9" filter="url(#dglow1)"/>
+
+                <!-- Neck -->
+                <path d="M420,300 Q380,250 370,200 Q365,170 380,150" 
+                      fill="none" stroke="url(#dg1)" stroke-width="40" stroke-linecap="round" opacity="0.9" filter="url(#dglow1)">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </path>
+
+                <!-- Head -->
+                <path d="M380,150 L340,120 L310,130 L300,115 L330,100 L360,90 L390,100 L410,120 
+                         L420,140 L400,155 Z" 
+                      fill="url(#dg1)" opacity="0.95" filter="url(#dglow1)">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </path>
+
+                <!-- Jaw / open mouth -->
+                <path d="M310,130 L280,145 L260,140 L290,150 L320,145 L340,135" 
+                      fill="#cc2200" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </path>
+
+                <!-- Horns -->
+                <path d="M360,90 L340,55 L350,75" fill="url(#dg1)" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </path>
+                <path d="M390,100 L400,60 L395,80" fill="url(#dg1)" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </path>
+
+                <!-- Eye -->
+                <circle cx="365" cy="120" r="6" fill="#ff8800" opacity="0.95">
+                    <animate attributeName="opacity" values="0.95;1;0.6;1;0.95" dur="3s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="365" cy="120" r="2.5" fill="#fff" opacity="0.9">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </circle>
+
+                <!-- Fire breath from mouth -->
+                <ellipse cx="260" cy="138" rx="40" ry="8" fill="#ff4400" opacity="0.5" filter="url(#dglow1)">
+                    <animate attributeName="rx" values="30;60;30" dur="0.8s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="0.8s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,0;3,-5;0,0;-3,5;0,0" dur="5s" repeatCount="indefinite"/>
+                </ellipse>
+                <ellipse cx="220" cy="138" rx="25" ry="5" fill="#ff6600" opacity="0.3">
+                    <animate attributeName="rx" values="20;45;20" dur="0.8s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.2;0.5;0.2" dur="0.8s" repeatCount="indefinite"/>
+                </ellipse>
+
+                <!-- Chest/belly -->
+                <path d="M380,320 Q350,400 370,480 Q400,520 450,500 Q480,470 470,400 Q460,340 430,310" 
+                      fill="url(#dg1)" opacity="0.85"/>
+
+                <!-- Back leg -->
+                <path d="M420,480 Q400,540 380,580 Q370,600 350,620 L340,615 L365,590 
+                         Q380,560 390,530 Q395,510 410,490" 
+                      fill="url(#dg1)" opacity="0.8"/>
+                <!-- Foot claws -->
+                <path d="M350,620 L330,630 M350,620 L340,635 M350,620 L355,635" 
+                      stroke="url(#dg1)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+                <!-- Front leg -->
+                <path d="M400,380 Q370,420 360,460 Q355,480 340,500 L335,495 L355,470 
+                         Q365,440 380,410 Q390,390 400,380" 
+                      fill="url(#dg1)" opacity="0.8"/>
+                <!-- Foot claws -->
+                <path d="M340,500 L320,510 M340,500 L330,515 M340,500 L345,515" 
+                      stroke="url(#dg1)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+                <!-- Tail -->
+                <path d="M470,480 Q520,530 560,560 Q610,590 660,580 Q710,560 730,520 
+                         Q740,500 760,490 L770,500 L750,510 Q720,540 700,560 
+                         Q660,600 600,600 Q540,590 490,550 Q460,520 450,490" 
+                      fill="url(#dg1)" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;10,5;0,0;-5,-3;0,0" dur="6s" repeatCount="indefinite"/>
+                </path>
+                <!-- Tail spike -->
+                <path d="M760,490 L780,475 L770,500 L790,495 L770,510" 
+                      fill="#cc2200" opacity="0.7">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;10,5;0,0;-5,-3;0,0" dur="6s" repeatCount="indefinite"/>
+                </path>
+
+                <!-- Back spines -->
+                <path d="M420,280 L425,260 L430,285" fill="#cc2200" opacity="0.6"/>
+                <path d="M440,290 L448,265 L452,295" fill="#cc2200" opacity="0.6"/>
+                <path d="M460,310 L470,285 L475,315" fill="#cc2200" opacity="0.5"/>
+                <path d="M470,340 L482,315 L478,345" fill="#cc2200" opacity="0.5"/>
+
+                <!-- Belly scales texture -->
+                <path d="M390,350 Q410,360 420,380" fill="none" stroke="#ff6600" stroke-width="1" opacity="0.2"/>
+                <path d="M385,380 Q405,390 415,410" fill="none" stroke="#ff6600" stroke-width="1" opacity="0.2"/>
+                <path d="M380,410 Q400,420 410,440" fill="none" stroke="#ff6600" stroke-width="1" opacity="0.2"/>
+            </svg>
+
+            <!-- RIGHT DRAGON (CSS mirrors it with scaleX(-1)) -->
+            <svg class="dragon-img dragon-right-img" viewBox="0 0 800 900" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="dg2" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ff6600" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="#8b0000" stop-opacity="0.8"/>
+                    </linearGradient>
+                    <filter id="dglow2">
+                        <feGaussianBlur stdDeviation="4" result="blur"/>
+                        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Main Wing -->
+                <path d="M400,300 L250,80 L230,180 L150,50 L160,170 L80,30 L110,160 L30,60 L80,180 
+                         L20,150 L70,220 L40,210 L100,280 L200,260 L300,300 Z" 
+                      fill="url(#dg2)" opacity="0.9" filter="url(#dglow2)">
+                    <animateTransform attributeName="transform" type="rotate" 
+                        values="0 400 300;3 400 300;0 400 300;-3 400 300;0 400 300" dur="4.5s" repeatCount="indefinite"/>
+                </path>
+
+                <line x1="400" y1="300" x2="250" y2="80" stroke="#ff4400" stroke-width="2" opacity="0.4"/>
+                <line x1="400" y1="300" x2="150" y2="50" stroke="#ff4400" stroke-width="2" opacity="0.3"/>
+                <line x1="400" y1="300" x2="80" y2="30" stroke="#ff4400" stroke-width="2" opacity="0.3"/>
+
+                <ellipse cx="440" cy="400" rx="80" ry="120" fill="url(#dg2)" opacity="0.9" filter="url(#dglow2)"/>
+
+                <path d="M420,300 Q380,250 370,200 Q365,170 380,150" 
+                      fill="none" stroke="url(#dg2)" stroke-width="40" stroke-linecap="round" opacity="0.9" filter="url(#dglow2)">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </path>
+
+                <path d="M380,150 L340,120 L310,130 L300,115 L330,100 L360,90 L390,100 L410,120 
+                         L420,140 L400,155 Z" 
+                      fill="url(#dg2)" opacity="0.95" filter="url(#dglow2)">
+                    <animateTransform attributeName="transform" type="translate" 
+                        values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </path>
+
+                <path d="M310,130 L280,145 L260,140 L290,150 L320,145 L340,135" fill="#cc2200" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </path>
+
+                <path d="M360,90 L340,55 L350,75" fill="url(#dg2)" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </path>
+                <path d="M390,100 L400,60 L395,80" fill="url(#dg2)" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </path>
+
+                <circle cx="365" cy="120" r="6" fill="#ff8800" opacity="0.95">
+                    <animate attributeName="opacity" values="0.95;0.6;1;0.8;0.95" dur="3.5s" repeatCount="indefinite"/>
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="365" cy="120" r="2.5" fill="#fff" opacity="0.9">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-3,-4;0,0;3,4;0,0" dur="5.5s" repeatCount="indefinite"/>
+                </circle>
+
+                <ellipse cx="260" cy="138" rx="40" ry="8" fill="#ff4400" opacity="0.5" filter="url(#dglow2)">
+                    <animate attributeName="rx" values="25;55;25" dur="0.9s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="0.9s" repeatCount="indefinite"/>
+                </ellipse>
+
+                <path d="M380,320 Q350,400 370,480 Q400,520 450,500 Q480,470 470,400 Q460,340 430,310" fill="url(#dg2)" opacity="0.85"/>
+
+                <path d="M420,480 Q400,540 380,580 Q370,600 350,620 L340,615 L365,590 Q380,560 390,530 Q395,510 410,490" fill="url(#dg2)" opacity="0.8"/>
+                <path d="M350,620 L330,630 M350,620 L340,635 M350,620 L355,635" stroke="url(#dg2)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+                <path d="M400,380 Q370,420 360,460 Q355,480 340,500 L335,495 L355,470 Q365,440 380,410 Q390,390 400,380" fill="url(#dg2)" opacity="0.8"/>
+                <path d="M340,500 L320,510 M340,500 L330,515 M340,500 L345,515" stroke="url(#dg2)" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+
+                <path d="M470,480 Q520,530 560,560 Q610,590 660,580 Q710,560 730,520 Q740,500 760,490 L770,500 L750,510 Q720,540 700,560 Q660,600 600,600 Q540,590 490,550 Q460,520 450,490" fill="url(#dg2)" opacity="0.8">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-8,4;0,0;5,-3;0,0" dur="6.5s" repeatCount="indefinite"/>
+                </path>
+                <path d="M760,490 L780,475 L770,500 L790,495 L770,510" fill="#cc2200" opacity="0.7">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-8,4;0,0;5,-3;0,0" dur="6.5s" repeatCount="indefinite"/>
+                </path>
+
+                <path d="M420,280 L425,260 L430,285" fill="#cc2200" opacity="0.6"/>
+                <path d="M440,290 L448,265 L452,295" fill="#cc2200" opacity="0.6"/>
+                <path d="M460,310 L470,285 L475,315" fill="#cc2200" opacity="0.5"/>
+                <path d="M470,340 L482,315 L478,345" fill="#cc2200" opacity="0.5"/>
+            </svg>
+
+        </div>
+
+        <!-- Dragon glow -->
+        <div class="dragon-glow"></div>
+
+        <div class="smoke"></div>
+
+        <div class="scroll-indicator">
+            <span>Scroll</span>
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- About -->
+    <section class="section about-section" id="about">
+        <div class="section-header reveal">
+            <div class="section-tag">The Story</div>
+            <h2 class="section-title">Enter the Rift</h2>
+            <div class="section-line"></div>
+        </div>
+        <p class="about-text reveal">
+            The world has shattered. Ancient oaths, once sacred bonds that held reality together,
+            have been broken — unleashing the Rift of the Dead. Hordes of undead nightmares pour
+            through tears in the fabric of existence. You are an Oathkeeper, one of the last warriors
+            bound by blood and fire to seal the rifts and push back the endless tide of the dead.
+            Built on <strong style="color:#ff4400">Unreal Engine 5</strong>, experience next-generation
+            visuals, devastating combat, and a world consumed by darkness.
+        </p>
+    </section>
+
+    <!-- Features -->
+    <section class="section features-section" id="features">
+        <div class="section-header reveal">
+            <div class="section-tag">Game Features</div>
+            <h2 class="section-title">Forge Your Legacy</h2>
+            <div class="section-line"></div>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <span class="feature-icon">⚔️</span>
+                <h3>Brutal Combat</h3>
+                <p>Visceral, skill-based melee and ranged combat against terrifying undead hordes. Every swing matters, every bullet counts.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🌑</span>
+                <h3>Dark Open World</h3>
+                <p>Explore a massive, shattered world filled with ancient ruins, cursed forests, and rifts pulsing with necrotic energy.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🐉</span>
+                <h3>Mythic Creatures</h3>
+                <p>Face colossal undead beasts and corrupted dragons that guard the deepest rifts. Epic boss battles await the brave.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">👥</span>
+                <h3>Co-op Survival</h3>
+                <p>Team up with up to 4 players to survive dynamic horde events, defend strongholds, and close rifts together.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🔥</span>
+                <h3>Unreal Engine 5</h3>
+                <p>Stunning Nanite geometry, Lumen lighting, and MetaHuman technology deliver unprecedented visual fidelity.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">💀</span>
+                <h3>Permadeath Zones</h3>
+                <p>Venture into high-risk rift zones where death is permanent — but the rewards are legendary.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery -->
+    <section class="section gallery-section" id="gallery">
+        <div class="section-header reveal">
+            <div class="section-tag">Screenshots</div>
+            <h2 class="section-title">Glimpse the Darkness</h2>
+            <div class="section-line"></div>
+        </div>
+        <div class="gallery-grid reveal">
+            <div class="gallery-item"><span class="placeholder-text">Screenshot 01 — The Rift Opens</span></div>
+            <div class="gallery-item"><span class="placeholder-text">Screenshot 02 — Horde Assault</span></div>
+            <div class="gallery-item"><span class="placeholder-text">Screenshot 03 — Dragon Boss</span></div>
+            <div class="gallery-item"><span class="placeholder-text">Screenshot 04 — Dark Forest</span></div>
+            <div class="gallery-item"><span class="placeholder-text">Screenshot 05 — Combat</span></div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="section newsletter-section" id="newsletter">
+        <div class="section-header reveal">
+            <div class="section-tag">Stay Updated</div>
+            <h2 class="section-title">Join the Oath</h2>
+            <div class="section-line"></div>
+        </div>
+        <p class="about-text reveal" style="margin-bottom:20px">
+            Be the first to receive news, development updates, and exclusive reveals. Sign your oath below.
+        </p>
+        <div class="newsletter-form reveal">
+            <input type="email" placeholder="Enter your email">
+            <button type="submit">Swear the Oath</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div style="text-align:center">
+                <div class="footer-logo">OATHFALL</div>
+                <div class="footer-tagline">Rift of the Dead</div>
+            </div>
+            <div style="text-align:center">
+                <div class="social-label">Follow Us Into the Rift</div>
+                <div class="social-links">
+                    <a href="#" class="social-link twitter" aria-label="Twitter/X"><i class="fab fa-x-twitter"></i></a>
+                    <a href="#" class="social-link youtube" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="social-link tiktok" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+                    <a href="#" class="social-link facebook" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 OATHFALL — Rift of the Dead. All Rights Reserved.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Press Kit</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Preloader
+        window.addEventListener('load', () => {
+            setTimeout(() => document.getElementById('preloader').classList.add('hidden'), 2500);
+        });
+
+        // Particles
+        const pc = document.getElementById('particles');
+        for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            const s = Math.random() * 4 + 1;
+            p.style.width = s + 'px';
+            p.style.height = s + 'px';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+            p.style.animationDelay = Math.random() * 10 + 's';
+            pc.appendChild(p);
+        }
+
+        // Fire particles
+        const fp = document.getElementById('fireParticles');
+        for (let i = 0; i < 30; i++) {
+            const f = document.createElement('div');
+            f.classList.add('fire-particle');
+            f.style.left = Math.random() * 100 + '%';
+            f.style.top = Math.random() * 100 + '%';
+            f.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            f.style.animationDelay = Math.random() * 2 + 's';
+            f.style.width = (Math.random() * 4 + 2) + 'px';
+            f.style.height = f.style.width;
+            const colors = ['#ff4400', '#ff6600', '#ff8800', '#ffaa00', '#ff2200'];
+            f.style.background = colors[Math.floor(Math.random() * colors.length)];
+            fp.appendChild(f);
+        }
+
+        // Touch support for dragons
+        const tz = document.getElementById('titleZone');
+        tz.addEventListener('touchstart', () => tz.classList.toggle('touched'));
+
+        // Navbar scroll
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Hamburger
+        const ham = document.getElementById('hamburger');
+        const nav = document.getElementById('navLinks');
+        ham.addEventListener('click', () => nav.classList.toggle('active'));
+        nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => nav.classList.remove('active')));
+
+        // Scroll reveal
+        const reveals = document.querySelectorAll('.reveal');
+        const revealCheck = () => {
+            reveals.forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 150) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', revealCheck);
+        revealCheck();
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                const t = document.querySelector(a.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // Cursor trail
+        document.addEventListener('mousemove', e => {
+            const t = document.createElement('div');
+            t.classList.add('cursor-trail');
+            t.style.left = e.clientX + 'px';
+            t.style.top = e.clientY + 'px';
+            document.body.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 100);
+        });
+
+        // Parallax title
+        const hero = document.querySelector('.hero');
+        const mt = document.getElementById('mainTitle');
+        hero.addEventListener('mousemove', e => {
+            const x = (window.innerWidth / 2 - e.pageX) / 80;
+            const y = (window.innerHeight / 2 - e.pageY) / 80;
+            mt.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+        });
+        hero.addEventListener('mouseleave', () => mt.style.transform = '');
+
+        // Letter animation
+        setTimeout(() => {
+            const title = document.getElementById('mainTitle');
+            const text = title.textContent.trim();
+            title.textContent = '';
+            text.split('').forEach((l, i) => {
+                const s = document.createElement('span');
+                s.textContent = l;
+                s.style.display = 'inline-block';
+                s.style.opacity = '0';
+                s.style.transform = 'translateY(50px) rotateX(90deg)';
+                s.style.transition = `all 0.8s ease ${i * 0.1}s`;
+                title.appendChild(s);
+                setTimeout(() => { s.style.opacity = '1'; s.style.transform = 'translateY(0) rotateX(0)'; }, 2800);
+            });
+            [{l:'20%',d:'0s'},{l:'55%',d:'1s'},{l:'80%',d:'2s'}].forEach(dr => {
+                const d = document.createElement('div');
+                d.classList.add('blood-drip');
+                d.style.left = dr.l;
+                d.style.animationDelay = dr.d;
+                title.appendChild(d);
+            });
+        }, 100);
+
+        // Lightning flash
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                const bg = document.querySelector('.hero-bg');
+                bg.style.filter = 'brightness(1.5)';
+                setTimeout(() => bg.style.filter = 'brightness(1)', 100);
+                setTimeout(() => {
+                    bg.style.filter = 'brightness(1.3)';
+                    setTimeout(() => bg.style.filter = 'brightness(1)', 50);
+                }, 200);
+            }
+        }, 5000);
+
+        // Feature card tilt
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const r = card.getBoundingClientRect();
+                const rx = (e.clientY - r.top - r.height / 2) / 20;
+                const ry = (r.width / 2 - (e.clientX - r.left)) / 20;
+                card.style.transform = `translateY(-10px) perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+            });
+            card.addEventListener('mouseleave', () => card.style.transform = '');
+        });
+    </script>
+
+</body>
+</html>
